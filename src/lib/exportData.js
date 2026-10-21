@@ -162,7 +162,27 @@ export async function toPDF(summary, cfg) {
   return doc.save();
 }
 
-export function download(filename, data, type) {
+const isNativeApp = () => typeof window !== 'undefined' && !!window.Capacitor?.isNativePlatform?.();
+
+function toBase64(bytes) {
+  let bin = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  return btoa(bin);
+}
+
+/** Save a file: browser download on the web, share sheet in the Android app. */
+export async function download(filename, data, type) {
+  if (isNativeApp()) {
+    const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem');
+    const { Share } = await import('@capacitor/share');
+    const written =
+      typeof data === 'string'
+        ? await Filesystem.writeFile({ path: filename, data, directory: Directory.Cache, encoding: Encoding.UTF8 })
+        : await Filesystem.writeFile({ path: filename, data: toBase64(new Uint8Array(await data.arrayBuffer())), directory: Directory.Cache });
+    await Share.share({ title: filename, files: [written.uri] });
+    return;
+  }
   const blob = data instanceof Blob ? data : new Blob([data], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

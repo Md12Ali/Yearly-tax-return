@@ -189,12 +189,14 @@ export function ExportButtons({ result, cfg, year }) {
   const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   const base = `self-assessment-${cfg.id}`;
-  const csv = () => download(`${base}.csv`, toCSV(buildSummary(result, cfg, year)), 'text/csv;charset=utf-8');
+  const csv = () => download(`${base}.csv`, toCSV(buildSummary(result, cfg, year)), 'text/csv;charset=utf-8').catch(() => {});
   const pdf = async () => {
     setBusy(true);
     try {
       const bytes = await toPDF(buildSummary(result, cfg, year), cfg);
-      download(`${base}.pdf`, new Blob([bytes], { type: 'application/pdf' }));
+      await download(`${base}.pdf`, new Blob([bytes], { type: 'application/pdf' }));
+    } catch {
+      /* share sheet closed */
     } finally {
       setBusy(false);
     }

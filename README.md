@@ -59,3 +59,16 @@ tests/         taxEngine.test.js
 ```
 
 To update for a new tax year, add an entry to `src/data/taxYears.js`.
+
+## Android app (APK)
+
+The app is wrapped with [Capacitor](https://capacitorjs.com). Every push to `main` runs
+`.github/workflows/android.yml`, which builds a signed APK and publishes it as a GitHub Release.
+
+- **Latest APK:** https://github.com/Md12Ali/Yearly-tax-return/releases/latest/download/tax-return-helper.apk
+- Install: open the link on your Android phone, download, tap the file, and allow "Install unknown apps" when asked.
+- In the app, the PDF/CSV buttons open the phone's share sheet (save to Files, Drive, email…).
+- `android-signing/test-release.keystore` is a **test key only** (password `taxhelper-test`). Before Google Play,
+  create your own private upload key, keep it out of the repo, and build an `.aab` with it.
+
+Build locally (needs Android Studio): `npm install && npm run build && npx cap add android && npx cap open android`

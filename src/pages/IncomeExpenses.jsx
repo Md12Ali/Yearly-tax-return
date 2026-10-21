@@ -22,7 +22,7 @@ export default function IncomeExpenses({ result, cfg, year, updateYear, resetYea
 
   return (
     <div className="space-y-4">
-      <div className="sticky top-[var(--header-h)] z-20 -mx-4 bg-bg/90 px-4 py-2 backdrop-blur sm:mx-0 sm:px-0">
+      <div className="sticky top-[calc(var(--header-h)+env(safe-area-inset-top))] z-20 -mx-4 bg-bg/90 px-4 py-2 backdrop-blur sm:mx-0 sm:px-0">
         <div className="mb-1 text-xs font-bold uppercase tracking-wide text-muted">{t('ie.pickBusiness')}</div>
         <Segmented label={t('ie.pickBusiness')} value={scope} onChange={setScope} options={options} size="sm" />
       </div>

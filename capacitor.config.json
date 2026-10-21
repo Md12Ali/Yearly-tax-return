@@ -1,0 +1,14 @@
+{
+  "appId": "uk.md12ali.taxreturnhelper",
+  "appName": "Tax Return Helper",
+  "webDir": "dist",
+  "android": {
+    "adjustMarginsForEdgeToEdge": "auto"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "backgroundColor": "#0e6a4e"
+    }
+  }
+}

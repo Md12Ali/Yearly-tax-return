@@ -58,7 +58,7 @@ function Shell({ store }) {
 
   return (
     <div className="min-h-dvh bg-bg pb-24 text-ink md:pb-10">
-      <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur" style={{ height: 'var(--header-h)' }}>
+      <header className="sticky top-0 z-30 border-b border-line bg-bg/90 pt-[env(safe-area-inset-top)] backdrop-blur" style={{ height: 'calc(var(--header-h) + env(safe-area-inset-top))' }}>
         <div className="mx-auto flex h-full max-w-5xl items-center gap-2 px-4">
           <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent text-lg font-extrabold text-accent-ink" aria-hidden>
             £

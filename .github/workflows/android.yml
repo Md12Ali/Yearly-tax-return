@@ -1,0 +1,77 @@
+name: Android APK
+
+# Builds the Android app on every push to main (or when you press "Run workflow")
+# and publishes the APK as a GitHub Release you can download on your phone.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install and test
+        run: |
+          npm install
+          npm test
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Create Android project
+        run: |
+          npx cap add android
+          npx @capacitor/assets generate --android \
+            --iconBackgroundColor '#0e6a4e' --iconBackgroundColorDark '#0a2a21' \
+            --splashBackgroundColor '#f3f4ef' --splashBackgroundColorDark '#0c1110'
+          npx cap sync android
+
+      - name: Set app version
+        run: |
+          sed -i "s/versionCode [0-9]*/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          sed -i "s/versionName \"[^\"]*\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
+
+      # TEST signing key, kept in the repo so new builds install over old ones.
+      # For Google Play, create your own private upload key and store it in GitHub Secrets instead.
+      - name: Build signed APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android-signing/test-release.keystore \
+            -Pandroid.injected.signing.store.password=taxhelper-test \
+            -Pandroid.injected.signing.key.alias=taxhelper-test \
+            -Pandroid.injected.signing.key.password=taxhelper-test
+          cp app/build/outputs/apk/release/app-release.apk $GITHUB_WORKSPACE/tax-return-helper.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tax-return-helper-apk
+          path: tax-return-helper.apk
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-1.0.${{ github.run_number }}
+          name: Tax Return Helper 1.0.${{ github.run_number }} (test APK)
+          body: |
+            Test build for Android. Download **tax-return-helper.apk** on your phone and open it to install
+            (allow "Install unknown apps" for your browser or Files app when asked).
+            Signed with a test key — not for Google Play.
+          files: tax-return-helper.apk
+          make_latest: true
