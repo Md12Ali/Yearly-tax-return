@@ -1,0 +1,105 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --header-h: 60px;
+  --bg: #f3f4ef;
+  --surface: #ffffff;
+  --surface-2: #eceee7;
+  --line: #d7dbd1;
+  --ink: #12201a;
+  --muted: #5a665f;
+  --accent: #0e6a4e;
+  --accent-ink: #ffffff;
+  --accent-soft: #dceee5;
+  --good: #0c7a49;
+  --warn: #b26200;
+  --warn-soft: #fbefdc;
+  --bad: #b42318;
+  --c-tuition: #2f6fdb;
+  --c-ride: #7a4fd6;
+  --c-delivery: #d9622b;
+  --hero-a: #0e6a4e;
+  --hero-b: #0b3d30;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0c1110;
+  --surface: #141b18;
+  --surface-2: #1c2521;
+  --line: #2a3530;
+  --ink: #eef3ef;
+  --muted: #9aa8a1;
+  --accent: #3ecf8e;
+  --accent-ink: #052014;
+  --accent-soft: #123327;
+  --good: #4ade9a;
+  --warn: #f1b44f;
+  --warn-soft: #36280f;
+  --bad: #ff7d70;
+  --c-tuition: #7aa7ff;
+  --c-ride: #b69cff;
+  --c-delivery: #ff9a66;
+  --hero-a: #17644b;
+  --hero-b: #0a2a21;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: 'Manrope', 'Noto Sans Bengali', ui-sans-serif, system-ui, sans-serif;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:lang(bn) body {
+  line-height: 1.55;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.hero {
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(255, 255, 255, 0.16), transparent 55%),
+    linear-gradient(135deg, var(--hero-a), var(--hero-b));
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
