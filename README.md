@@ -18,6 +18,14 @@ English and বাংলা (Bengali), light and dark theme. Your figures are sa
 
 **Export:** PDF and CSV summary with SA103S box numbers (9, 12, 16–21).
 
+## Daily use
+
+- **＋ Add** (every screen): log income, an expense or business miles in a few taps. Entries go into the right tax year from their date.
+- **Dashboard → this month**: income, expenses and miles logged this month, with recent entries.
+- **Backup & restore**: save everything to a file (e.g. Google Drive) and restore it on any phone or browser. Reminder after 14 days.
+- **All entries (CSV)**: every logged entry across all years, for your records.
+- The website works offline and can be installed from the browser menu (PWA).
+
 ## How the numbers work
 
 - Rates for England, Wales & NI, tax years **2024/25, 2025/26 and 2026/27** (`src/data/taxYears.js`).

@@ -6,7 +6,9 @@ import { Card, MoneyInput, Segmented, Callout, Button, LabelWithTip } from '../c
 import { VehicleMethods, vehicleName } from '../components/parts.jsx';
 import { JobClaimGuide } from '../components/ClaimGuide.jsx';
 
-const todayIso = () => new Date().toISOString().slice(0, 10);
+import { todayUK } from '../lib/dates.js';
+
+const clampDate = (d, cfg) => (d < cfg.start ? cfg.start : d > cfg.end ? cfg.end : d);
 const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const inputCls = 'w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-base text-ink outline-none focus:border-accent';
 
@@ -31,7 +33,7 @@ export default function IncomeExpenses({ result, cfg, year, updateYear, resetYea
         {JOBS.includes(scope) && <JobEditor job={scope} result={result} year={year} updateYear={updateYear} />}
         {scope === 'vehicles' && <VehiclesEditor result={result} year={year} updateYear={updateYear} cfg={cfg} />}
         {scope === 'shared' && <SharedEditor year={year} updateYear={updateYear} cfg={cfg} />}
-        <QuickLog scope={scope} year={year} updateYear={updateYear} />
+        <QuickLog scope={scope} year={year} updateYear={updateYear} cfg={cfg} />
       </div>
 
       <div className="flex justify-end pt-2">
@@ -386,7 +388,7 @@ function SharedEditor({ year, updateYear, cfg }) {
 
 /* ---------------- Quick log ---------------- */
 
-function QuickLog({ scope, year, updateYear }) {
+function QuickLog({ scope, year, updateYear, cfg }) {
   const { t, money, shortDate } = useI18n();
 
   // Every item that can be logged in this section.
@@ -405,7 +407,7 @@ function QuickLog({ scope, year, updateYear }) {
   const [sel, setSel] = useState('');
   const [amount, setAmount] = useState('');
   const [noteText, setNoteText] = useState('');
-  const [when, setWhen] = useState(todayIso());
+  const [when, setWhen] = useState(() => clampDate(todayUK(), cfg));
   const chosen = targets.find((x) => key(x) === sel) || targets[0];
   const scopes = new Set(targets.map((x) => x.scope));
   const labelFor = (e) => targets.find((x) => key(x) === key(e))?.label || e.field;
@@ -421,7 +423,7 @@ function QuickLog({ scope, year, updateYear }) {
   if (!targets.length) return null;
 
   return (
-    <Card title={`⚡ ${t('ie.quickLog')}`} subtitle={t('ie.quickLogHint')}>
+    <Card title={`⚡ ${t('ie.quickLog')}`} subtitle={t('ie.quickLogHint', { year: cfg.label })}>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <LabelWithTip htmlFor="ql-item" label={t('ie.item')} />
@@ -435,7 +437,7 @@ function QuickLog({ scope, year, updateYear }) {
         </div>
         <div className="py-2">
           <LabelWithTip htmlFor="ql-date" label={t('ie.date')} />
-          <input id="ql-date" type="date" value={when} onChange={(e) => setWhen(e.target.value)} className={inputCls} />
+          <input id="ql-date" type="date" value={when} min={cfg.start} max={cfg.end} onChange={(e) => setWhen(clampDate(e.target.value || todayUK(), cfg))} className={inputCls} />
         </div>
         <MoneyInput label={t('ie.amount')} value={amount} onChange={setAmount} />
         <div className="sm:col-span-2">

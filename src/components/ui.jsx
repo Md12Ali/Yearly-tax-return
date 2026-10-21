@@ -202,7 +202,7 @@ export function Button({ children, onClick, variant = 'primary', className = '',
         ? 'border border-bad/50 text-bad hover:bg-bad/10'
         : 'border border-line bg-surface text-ink hover:border-accent';
   return (
-    <button type="button" onClick={onClick} className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${v} ${className}`} {...rest}>
+    <button type="button" onClick={onClick} className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${v} ${className}`} {...rest}>
       {children}
     </button>
   );

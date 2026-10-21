@@ -10,7 +10,7 @@ export const num = (v) => {
 const round2 = (n) => Math.round(n * 100) / 100;
 
 /** Logged quick-entries for a field. scope = job id, 'shared' or a vehicle id. */
-function logged(data, scope, kind, field) {
+export function logged(data, scope, kind, field) {
   return (data.entries || [])
     .filter((e) => e.scope === scope && e.kind === kind && e.field === field)
     .reduce((s, e) => s + num(e.amount), 0);
@@ -59,7 +59,8 @@ function allocate(amount, weights, pool) {
 export function computeVehicle(data, v, cfg, activeJobs) {
   const type = VEHICLE_TYPES[v.type] ? v.type : 'car';
   const jobs = (v.jobs?.length ? v.jobs : JOBS).filter((j) => JOBS.includes(j));
-  const miles = Object.fromEntries(JOBS.map((j) => [j, jobs.includes(j) ? num(v.miles?.[j]) : 0]));
+  // Yearly figure typed in + any trips logged day by day.
+  const miles = Object.fromEntries(JOBS.map((j) => [j, jobs.includes(j) ? round2(num(v.miles?.[j]) + logged(data, v.id, 'miles', j)) : 0]));
   const businessMiles = JOBS.reduce((s, j) => s + miles[j], 0);
   const totalMiles = num(v.totalMiles);
   const hasTotal = totalMiles > 0 && totalMiles >= businessMiles && businessMiles > 0;

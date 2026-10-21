@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import IncomeExpenses from './pages/IncomeExpenses.jsx';
 import TaxCalculator from './pages/TaxCalculator.jsx';
 import HmrcGuide from './pages/HmrcGuide.jsx';
+import QuickAdd from './components/QuickAdd.jsx';
 
 const TABS = [
   { id: 'dashboard', icon: '📊' },
@@ -32,8 +33,23 @@ export default function App() {
 }
 
 function Shell({ store }) {
-  const { t } = useI18n();
+  const { t, money, number } = useI18n();
   const { settings, setSetting, year, updateYear, resetYear } = store;
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const id = setTimeout(() => setToast(null), toast.action ? 7000 : 3500);
+    return () => clearTimeout(id);
+  }, [toast]);
+
+  const notify = (text, tone = 'good', action) => setToast({ text, tone, action, key: Date.now() });
+
+  const onAdded = ({ entry, yearId, label }) => {
+    const value = entry.kind === 'miles' ? `${number(Number(entry.amount))} mi` : money(Number(String(entry.amount).replace(/,/g, '')));
+    const other = yearId !== settings.taxYear;
+    notify(t('quick.added', { item: label, amount: value, year: TAX_YEARS[yearId]?.label || '' }), 'good', other ? { label: t('quick.showYear', { year: TAX_YEARS[yearId].label }), run: () => setSetting('taxYear', yearId) } : null);
+  };
   const cfg = TAX_YEARS[settings.taxYear] || TAX_YEARS[DEFAULT_TAX_YEAR];
   const [tab, setTab] = useState(() => (TABS.some((x) => x.id === location.hash.slice(1)) ? location.hash.slice(1) : 'dashboard'));
   const result = useMemo(() => computeAll(year, cfg), [year, cfg]);
@@ -54,10 +70,10 @@ function Shell({ store }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const props = { result, cfg, year, updateYear, resetYear, goTo };
+  const props = { result, cfg, year, updateYear, resetYear, goTo, store, notify };
 
   return (
-    <div className="min-h-dvh bg-bg pb-24 text-ink md:pb-10">
+    <div className="min-h-dvh bg-bg pb-44 text-ink md:pb-28">
       <header className="sticky top-0 z-30 border-b border-line bg-bg/90 pt-[env(safe-area-inset-top)] backdrop-blur" style={{ height: 'calc(var(--header-h) + env(safe-area-inset-top))' }}>
         <div className="mx-auto flex h-full max-w-5xl items-center gap-2 px-4">
           <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent text-lg font-extrabold text-accent-ink" aria-hidden>
@@ -136,6 +152,22 @@ function Shell({ store }) {
           <p>🔒 {t('app.savedLocally')}</p>
         </footer>
       </main>
+
+      <QuickAdd store={store} onAdded={onAdded} />
+
+      {toast && (
+        <div role="status" aria-live="polite" className="fixed inset-x-4 top-[calc(var(--header-h)+env(safe-area-inset-top)+0.75rem)] z-50 mx-auto max-w-md">
+          <div className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold shadow-lg ${toast.tone === 'warn' ? 'border-warn/40 bg-warn-soft text-ink' : 'border-accent/40 bg-accent-soft text-ink'}`}>
+            <span aria-hidden>{toast.tone === 'warn' ? '⚠️' : '✅'}</span>
+            <span className="min-w-0 flex-1">{toast.text}</span>
+            {toast.action && (
+              <button type="button" onClick={() => { toast.action.run(); setToast(null); }} className="shrink-0 font-extrabold text-accent underline underline-offset-2">
+                {toast.action.label}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Mobile bottom tabs */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" aria-label="Sections">

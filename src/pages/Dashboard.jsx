@@ -2,6 +2,7 @@ import { useI18n } from '../i18n/index.jsx';
 import { JOBS, JOB_META } from '../data/fields.js';
 import { Card, Stat, Progress, Callout, Button } from '../components/ui.jsx';
 import { VehicleMethods, MoneyFlow, ExportButtons, jobLabel } from '../components/parts.jsx';
+import { ThisMonthCard, BackupCard } from '../components/DailyCards.jsx';
 
 const daysUntil = (iso) => {
   const today = new Date();
@@ -9,7 +10,7 @@ const daysUntil = (iso) => {
   return Math.ceil((end - today) / 86400000);
 };
 
-export default function Dashboard({ result, cfg, year, updateYear, goTo }) {
+export default function Dashboard({ result, cfg, year, updateYear, goTo, store, notify }) {
   const { t, tx, money, money0, date, pct } = useI18n();
   const { totals, tax } = result;
   const days = daysUntil(cfg.onlineDeadline);
@@ -47,6 +48,8 @@ export default function Dashboard({ result, cfg, year, updateYear, goTo }) {
           <span>{days >= 0 ? t('dash.daysLeft', { days }) : t('dash.overdue')}</span>
         </div>
       </section>
+
+      <ThisMonthCard store={store} />
 
       {empty && (
         <Card tone="accent">
@@ -138,6 +141,8 @@ export default function Dashboard({ result, cfg, year, updateYear, goTo }) {
       </div>
 
       {!empty && <ExportButtons result={result} cfg={cfg} year={year} />}
+
+      <BackupCard store={store} onMessage={notify} />
     </div>
   );
 }

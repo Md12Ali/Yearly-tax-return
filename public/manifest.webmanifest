@@ -1,0 +1,23 @@
+{
+  "name": "Tax Return Helper",
+  "short_name": "Tax Helper",
+  "description": "HMRC Self Assessment helper for driving instructors, private hire, delivery and other self-employed work — English & বাংলা.",
+  "id": "/",
+  "start_url": "/#dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f4ef",
+  "theme_color": "#0e6a4e",
+  "lang": "en-GB",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Income & Expenses", "url": "/#income", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Tax Calculator", "url": "/#calculator", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

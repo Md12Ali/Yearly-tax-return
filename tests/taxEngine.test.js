@@ -124,3 +124,21 @@ test('other self-employment and new private hire costs', () => {
   assert.equal(r.jobs.privateHire.boxes[18], 60);
   assert.equal(r.jobs.privateHire.boxes[19], 120);
 });
+
+test('daily mileage entries add to a vehicle', async () => {
+  const { taxYearForDate } = await import('../src/lib/dates.js');
+  const d = emptyYearData();
+  d.jobs.privateHire.income = { uber: '1000' };
+  d.vehicles[0] = { ...d.vehicles[0], method: 'mileage', miles: { privateHire: '100' } };
+  d.entries = [
+    { id: '1', date: '2025-05-01', scope: d.vehicles[0].id, kind: 'miles', field: 'privateHire', amount: '120' },
+    { id: '2', date: '2025-05-02', scope: d.vehicles[0].id, kind: 'miles', field: 'privateHire', amount: '80' },
+  ];
+  const r = computeAll(d, cfg);
+  assert.equal(r.vehicles[0].businessMiles, 300);
+  assert.equal(r.vehicles[0].mileageClaim, 135);
+  assert.equal(taxYearForDate('2026-10-21'), '2026-27');
+  assert.equal(taxYearForDate('2026-04-05'), '2025-26');
+  assert.equal(taxYearForDate('2026-04-06'), '2026-27');
+  assert.equal(taxYearForDate('2023-01-01'), null);
+});
