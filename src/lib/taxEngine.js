@@ -1,5 +1,5 @@
-import { JOBS, INCOME_FIELDS, EXPENSE_FIELDS, EXPENSE_BOXES } from '../data/fields.js';
-import { MILEAGE, POA_THRESHOLD, SHORT_FORM_TURNOVER_LIMIT } from '../data/taxYears.js';
+import { JOBS, INCOME_FIELDS, EXPENSE_FIELDS, EXPENSE_BOXES, VEHICLE_TYPES, VEHICLE_COSTS } from '../data/fields.js';
+import { POA_THRESHOLD, SHORT_FORM_TURNOVER_LIMIT } from '../data/taxYears.js';
 
 /** Parse any user input ("1,234.50", "", null) into a non-negative number. */
 export const num = (v) => {
@@ -9,129 +9,221 @@ export const num = (v) => {
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
-/** Typed total + any quick-log entries for one field. */
-export function fieldTotal(data, scope, kind, field) {
-  const bucket = scope === 'shared' ? data.shared : data.jobs[scope];
-  const base = num(kind === 'income' ? bucket.income?.[field] : bucket.expenses?.[field]);
-  const logged = (data.entries || [])
+/** Logged quick-entries for a field. scope = job id, 'shared' or a vehicle id. */
+function logged(data, scope, kind, field) {
+  return (data.entries || [])
     .filter((e) => e.scope === scope && e.kind === kind && e.field === field)
     .reduce((s, e) => s + num(e.amount), 0);
-  return round2(base + logged);
 }
 
-/** HMRC simplified mileage: 45p for the first 10,000 business miles, 25p after. */
-export function mileageAllowance(miles) {
+/** Typed amount + quick-log entries for one field. */
+export function fieldTotal(data, scope, kind, field) {
+  let base = 0;
+  if (kind === 'vehicle') base = num(data.vehicles.find((v) => v.id === scope)?.costs?.[field]);
+  else {
+    const bucket = scope === 'shared' ? data.shared : data.jobs[scope];
+    base = num(kind === 'income' ? bucket?.income?.[field] : bucket?.expenses?.[field]);
+  }
+  return round2(base + logged(data, scope, kind, field));
+}
+
+/** HMRC simplified mileage for one vehicle. */
+export function mileageAllowance(miles, type, rates) {
   const m = Math.max(0, miles);
-  const first = Math.min(m, MILEAGE.firstMiles);
-  const later = Math.max(0, m - MILEAGE.firstMiles);
-  return round2(first * MILEAGE.firstRate + later * MILEAGE.laterRate);
+  const kind = VEHICLE_TYPES[type]?.mileage;
+  if (kind === 'motorcycle') return round2(m * rates.motorcycle);
+  if (kind !== 'car') return 0;
+  const first = Math.min(m, rates.firstMiles);
+  return round2(first * rates.carFirst + Math.max(0, m - rates.firstMiles) * rates.carLater);
 }
 
-/** Split `amount` across jobs using weights; only active jobs receive a share. */
-function allocate(amount, weights, activeJobs) {
+/** Simplified use-of-home flat rate for the year. */
+export function homeAllowance(hours, months, flatRates) {
+  const h = num(hours);
+  const band = flatRates.find((b) => h >= b.minHours);
+  if (!band) return 0;
+  const m = Math.min(12, num(months) || 12);
+  return band.monthly * m;
+}
+
+/** Split `amount` across jobs by weight; only `pool` jobs receive a share. */
+function allocate(amount, weights, pool) {
   const out = Object.fromEntries(JOBS.map((j) => [j, 0]));
-  if (!amount) return out;
-  const pool = activeJobs.length ? activeJobs : JOBS;
+  if (!amount || !pool.length) return out;
   const totalW = pool.reduce((s, j) => s + (weights[j] || 0), 0);
-  pool.forEach((j) => {
-    out[j] = totalW > 0 ? (amount * (weights[j] || 0)) / totalW : amount / pool.length;
-  });
+  pool.forEach((j) => (out[j] = totalW > 0 ? (amount * (weights[j] || 0)) / totalW : amount / pool.length));
   return out;
 }
 
-/**
- * Work out every business (SA103S page) for one expense method.
- * Returns per-job figures, SA103S boxes (whole pounds) and combined totals.
- */
-export function computeBusinesses(data, method) {
-  const gross = {};
-  const miles = {};
-  JOBS.forEach((j) => {
-    gross[j] = round2(INCOME_FIELDS[j].reduce((s, f) => s + fieldTotal(data, j, 'income', f), 0));
-    miles[j] = num(data.jobs[j].miles);
-  });
+/** Everything about one vehicle: business use, actual claim, mileage claim, capital allowances. */
+export function computeVehicle(data, v, cfg, activeJobs) {
+  const type = VEHICLE_TYPES[v.type] ? v.type : 'car';
+  const jobs = (v.jobs?.length ? v.jobs : JOBS).filter((j) => JOBS.includes(j));
+  const miles = Object.fromEntries(JOBS.map((j) => [j, jobs.includes(j) ? num(v.miles?.[j]) : 0]));
   const businessMiles = JOBS.reduce((s, j) => s + miles[j], 0);
-  const totalMiles = num(data.shared.totalMiles);
-  const hasTotalMiles = totalMiles > 0 && totalMiles >= businessMiles && businessMiles > 0;
-  const businessUse = hasTotalMiles ? businessMiles / totalMiles : 1;
-  const active = JOBS.filter((j) => gross[j] > 0 || miles[j] > 0);
+  const totalMiles = num(v.totalMiles);
+  const hasTotal = totalMiles > 0 && totalMiles >= businessMiles && businessMiles > 0;
+  const businessUse = hasTotal ? businessMiles / totalMiles : 1;
 
-  const mileageTotal = mileageAllowance(businessMiles);
-  const mileageShare = allocate(mileageTotal, miles, active);
+  const running = round2(VEHICLE_COSTS.reduce((s, f) => s + fieldTotal(data, v.id, 'vehicle', f), 0));
+  const isCar = type === 'car' || type === 'dualControl';
+  const cost = num(v.purchase?.cost);
+  const bf = num(v.purchase?.broughtForward);
+  const ca = cfg.capitalAllowances;
+
+  // Cars: capital allowances. Vans, motorcycles, bicycles: cash basis lets you deduct the purchase as an expense.
+  let fya = 0;
+  let wda = 0;
+  let purchaseExpense = 0;
+  if (isCar) {
+    if (v.purchase?.kind === 'newZero') {
+      fya = cost * ca.zeroEmissionFya;
+      wda = bf * ca.mainRate;
+    } else {
+      wda = (bf + cost) * (v.purchase?.kind === 'high' ? ca.specialRate : ca.mainRate);
+    }
+  } else {
+    purchaseExpense = cost;
+  }
+  fya = round2(fya * businessUse);
+  wda = round2(wda * businessUse);
+
+  const actualExpense = round2((running + purchaseExpense) * businessUse);
+  const actualClaim = round2(actualExpense + fya + wda);
+  const eligible = !!VEHICLE_TYPES[type].mileage;
+  const mileageClaim = eligible ? mileageAllowance(businessMiles, type, cfg.mileage) : 0;
+  const method = eligible && v.method === 'mileage' ? 'mileage' : 'actual';
+  const best = !eligible ? 'actual' : mileageClaim > actualClaim ? 'mileage' : actualClaim > mileageClaim ? 'actual' : 'same';
+
+  // Who gets the cost: by miles, otherwise by the jobs it's used for that have income.
+  const pool = businessMiles > 0 ? jobs : jobs.filter((j) => activeJobs.includes(j)).length ? jobs.filter((j) => activeJobs.includes(j)) : jobs;
+  const weights = businessMiles > 0 ? miles : {};
+
+  return {
+    id: v.id,
+    name: v.name,
+    type,
+    jobs,
+    eligible,
+    method,
+    best,
+    businessMiles,
+    totalMiles,
+    hasTotal,
+    businessUse,
+    running,
+    purchaseExpense,
+    actualExpense,
+    fya,
+    wda,
+    actualClaim,
+    mileageClaim,
+    claim: method === 'mileage' ? mileageClaim : actualClaim,
+    saving: eligible ? round2(Math.abs(mileageClaim - actualClaim)) : 0,
+    split: {
+      box12: allocate(method === 'mileage' ? mileageClaim : actualExpense, weights, pool),
+      fya: allocate(method === 'mileage' ? 0 : fya, weights, pool),
+      wda: allocate(method === 'mileage' ? 0 : wda, weights, pool),
+    },
+  };
+}
+
+/**
+ * Work out every business (one SA103S page each).
+ * methodOverride lets the comparison try each vehicle's other method.
+ */
+export function computeBusinesses(data, cfg, methodOverride = {}) {
+  const gross = {};
+  const box10 = {};
+  JOBS.forEach((j) => {
+    const job = data.jobs[j];
+    let g = 0;
+    let other = 0;
+    INCOME_FIELDS[j].forEach((f) => {
+      const amt = fieldTotal(data, j, 'income', f.id);
+      if (f.box === 10) other += amt;
+      else g += amt;
+    });
+    (job.customIncome || []).forEach((c) => (g += num(c.amount)));
+    gross[j] = round2(g);
+    box10[j] = round2(other);
+  });
+  const active = JOBS.filter((j) => gross[j] > 0 || box10[j] > 0);
 
   const jobs = {};
   JOBS.forEach((j) => {
-    jobs[j] = { gross: gross[j], miles: miles[j], byBox: Object.fromEntries(EXPENSE_BOXES.map((b) => [b, 0])), vehicleActual: 0, mileage: 0 };
+    jobs[j] = { gross: gross[j], otherIncome: box10[j], byBox: Object.fromEntries(EXPENSE_BOXES.map((b) => [b, 0])), fya: 0, wda: 0, vehicleClaim: 0 };
   });
 
-  // Job-specific expenses
+  // Job-specific expenses + custom ones
   JOBS.forEach((j) => {
-    EXPENSE_FIELDS[j].forEach((f) => {
-      const amt = fieldTotal(data, j, 'expense', f.id);
-      if (!amt) return;
-      if (f.vehicle) {
-        jobs[j].vehicleActual += amt;
-        if (method === 'mileage') return; // covered by the mileage rate
-      }
-      jobs[j].byBox[f.box] += amt;
+    EXPENSE_FIELDS[j].forEach((f) => (jobs[j].byBox[f.box] += fieldTotal(data, j, 'expense', f.id)));
+    (data.jobs[j].customExpenses || []).forEach((c) => (jobs[j].byBox[c.box || 19] += num(c.amount)));
+  });
+
+  // Shared costs, split by income
+  const sharedPool = active.length ? active : JOBS;
+  const addShared = (amount, box) => {
+    const split = allocate(amount, gross, sharedPool);
+    JOBS.forEach((j) => (jobs[j].byBox[box] += split[j]));
+  };
+  EXPENSE_FIELDS.shared.forEach((f) => addShared(fieldTotal(data, 'shared', 'expense', f.id), f.box));
+  (data.shared.customExpenses || []).forEach((c) => addShared(num(c.amount), c.box || 19));
+  const home = homeAllowance(data.shared.homeHours, data.shared.homeMonths, cfg.homeFlatRates);
+  addShared(home, 14);
+
+  // Vehicles
+  const vehicles = (data.vehicles || []).map((v) => {
+    const vv = methodOverride[v.id] ? { ...v, method: methodOverride[v.id] } : v;
+    return computeVehicle(data, vv, cfg, active);
+  });
+  vehicles.forEach((r) => {
+    JOBS.forEach((j) => {
+      jobs[j].byBox[12] += r.split.box12[j];
+      jobs[j].fya += r.split.fya[j];
+      jobs[j].wda += r.split.wda[j];
+      jobs[j].vehicleClaim += r.split.box12[j] + r.split.fya[j] + r.split.wda[j];
     });
   });
 
-  // Shared expenses, split across the businesses
-  EXPENSE_FIELDS.shared.forEach((f) => {
-    let amt = fieldTotal(data, 'shared', 'expense', f.id);
-    if (!amt) return;
-    if (f.vehicle) amt *= businessUse;
-    const split = allocate(amt, f.allocate === 'miles' ? miles : gross, active);
-    JOBS.forEach((j) => {
-      if (f.vehicle) {
-        jobs[j].vehicleActual += split[j];
-        if (method === 'mileage') return;
-      }
-      jobs[j].byBox[f.box] += split[j];
-    });
-  });
-
-  if (method === 'mileage') {
-    JOBS.forEach((j) => {
-      jobs[j].mileage = mileageShare[j];
-      jobs[j].byBox[12] += mileageShare[j];
-    });
-  }
-
-  // SA103S boxes: HMRC lets you round income down and expenses up to whole pounds.
+  // SA103S boxes in whole pounds: income rounded down, expenses and allowances rounded up.
   JOBS.forEach((j) => {
     const r = jobs[j];
     r.expenses = round2(EXPENSE_BOXES.reduce((s, b) => s + r.byBox[b], 0));
-    r.profit = round2(r.gross - r.expenses);
-    const boxes = { 9: Math.floor(r.gross), 10: 0 };
+    r.capitalAllowances = round2(r.fya + r.wda);
+    r.profit = round2(r.gross + r.otherIncome - r.expenses - r.capitalAllowances);
+    const boxes = { 9: Math.floor(r.gross), 10: Math.floor(r.otherIncome) };
     EXPENSE_BOXES.forEach((b) => (boxes[b] = Math.ceil(round2(r.byBox[b]))));
     boxes[20] = EXPENSE_BOXES.reduce((s, b) => s + boxes[b], 0);
     boxes[21] = Math.max(0, boxes[9] + boxes[10] - boxes[20]);
     boxes[22] = Math.max(0, boxes[20] - boxes[9] - boxes[10]);
+    boxes['24.1'] = Math.ceil(round2(r.fya));
+    boxes[25] = Math.ceil(round2(r.wda));
+    const afterCa = boxes[21] - boxes[22] - boxes['24.1'] - boxes[25];
+    boxes[31] = Math.max(0, afterCa); // total taxable profits from this business
+    boxes[32] = Math.max(0, -afterCa); // loss
     r.boxes = boxes;
     r.active = active.includes(j);
     r.shortFormOk = r.gross < SHORT_FORM_TURNOVER_LIMIT;
   });
 
-  const totalGross = round2(JOBS.reduce((s, j) => s + jobs[j].gross, 0));
-  const totalExpenses = round2(JOBS.reduce((s, j) => s + jobs[j].expenses, 0));
-  const profitBoxes = JOBS.reduce((s, j) => s + jobs[j].boxes[21] - jobs[j].boxes[22], 0);
+  const sum = (k) => round2(JOBS.reduce((s, j) => s + jobs[j][k], 0));
+  const totalGross = round2(sum('gross') + sum('otherIncome'));
+  const totalExpenses = sum('expenses');
+  const totalCa = sum('capitalAllowances');
 
   return {
-    method,
     jobs,
+    vehicles,
     totals: {
       gross: totalGross,
       expenses: totalExpenses,
-      netProfit: round2(totalGross - totalExpenses),
-      taxableProfits: Math.max(0, profitBoxes), // whole pounds, losses set against other trades
-      businessMiles,
-      totalMiles,
-      hasTotalMiles,
-      businessUse,
-      mileageTotal,
-      vehicleActual: round2(JOBS.reduce((s, j) => s + jobs[j].vehicleActual, 0)),
+      capitalAllowances: totalCa,
+      netProfit: round2(totalGross - totalExpenses - totalCa),
+      taxableProfits: Math.max(0, JOBS.reduce((s, j) => s + jobs[j].boxes[31] - jobs[j].boxes[32], 0)),
+      businessMiles: vehicles.reduce((s, v) => s + v.businessMiles, 0),
+      vehicleClaim: round2(vehicles.reduce((s, v) => s + v.claim, 0)),
+      home,
     },
   };
 }
@@ -152,10 +244,8 @@ export function computeTax(profit, cfg, { class2Voluntary = false, poaPaid = 0 }
   const incomeTax = round2(basicTax + higherTax + additionalTax);
 
   const c4 = cfg.class4;
-  const c4MainAmt = Math.max(0, Math.min(p, c4.upperLimit) - c4.lowerLimit);
-  const c4UpperAmt = Math.max(0, p - c4.upperLimit);
-  const class4Main = round2(c4MainAmt * c4.mainRate);
-  const class4Upper = round2(c4UpperAmt * c4.upperRate);
+  const class4Main = round2(Math.max(0, Math.min(p, c4.upperLimit) - c4.lowerLimit) * c4.mainRate);
+  const class4Upper = round2(Math.max(0, p - c4.upperLimit) * c4.upperRate);
   const class4 = round2(class4Main + class4Upper);
 
   const c2 = cfg.class2;
@@ -169,7 +259,6 @@ export function computeTax(profit, cfg, { class2Voluntary = false, poaPaid = 0 }
   const poaEach = poaRequired ? round2(poaBase / 2) : 0;
   const paid = num(poaPaid);
   const balance = round2(Math.max(0, total - paid));
-  const refund = round2(Math.max(0, paid - total));
 
   return {
     profit: p,
@@ -188,34 +277,31 @@ export function computeTax(profit, cfg, { class2Voluntary = false, poaPaid = 0 }
     poaRequired,
     poaEach,
     balance,
-    refund,
+    refund: round2(Math.max(0, paid - total)),
     dueJanuary: round2(balance + poaEach),
     dueJuly: poaEach,
   };
 }
 
-/** Everything the UI needs: both methods, the chosen one, and which saves more. */
+/** Everything the UI needs, including the best method for each vehicle. */
 export function computeAll(data, cfg) {
   const opts = { class2Voluntary: data.class2Voluntary, poaPaid: data.poaPaid };
-  const actual = computeBusinesses(data, 'actual');
-  const mileage = computeBusinesses(data, 'mileage');
-  const actualTax = computeTax(actual.totals.taxableProfits, cfg, opts);
-  const mileageTax = computeTax(mileage.totals.taxableProfits, cfg, opts);
-  const chosen = data.method === 'mileage' ? mileage : actual;
-  const tax = data.method === 'mileage' ? mileageTax : actualTax;
-  const diff = round2(actualTax.total - mileageTax.total);
-  const better = Math.abs(diff) < 0.01 ? 'same' : diff > 0 ? 'mileage' : 'actual';
-  const mtdQualifying = actual.totals.gross;
+  const current = computeBusinesses(data, cfg);
+  const tax = computeTax(current.totals.taxableProfits, cfg, opts);
+
+  // A bigger vehicle claim always means less tax, so the best mix is the bigger claim per vehicle.
+  const bestMethods = {};
+  current.vehicles.forEach((v) => {
+    if (v.eligible && v.best !== 'same') bestMethods[v.id] = v.best;
+  });
+  const best = computeBusinesses(data, cfg, bestMethods);
+  const bestTax = computeTax(best.totals.taxableProfits, cfg, opts);
+  const switches = current.vehicles.filter((v) => v.eligible && v.best !== 'same' && v.best !== v.method).map((v) => ({ id: v.id, to: v.best }));
 
   return {
-    ...chosen,
+    ...current,
     tax,
-    compare: {
-      actual: { expenses: actual.totals.expenses, profit: actual.totals.taxableProfits, tax: actualTax.total },
-      mileage: { expenses: mileage.totals.expenses, profit: mileage.totals.taxableProfits, tax: mileageTax.total },
-      better,
-      saving: Math.abs(diff),
-    },
-    mtd: { applies: mtdQualifying > cfg.mtd.threshold, threshold: cfg.mtd.threshold, startDate: cfg.mtd.startDate, qualifying: mtdQualifying },
+    best: { tax: bestTax.total, saving: round2(Math.max(0, tax.total - bestTax.total)), switches },
+    mtd: { applies: current.totals.gross > cfg.mtd.threshold, threshold: cfg.mtd.threshold, startDate: cfg.mtd.startDate, qualifying: current.totals.gross },
   };
 }

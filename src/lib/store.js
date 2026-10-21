@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DEFAULT_TAX_YEAR } from '../data/taxYears.js';
-import { emptyYearData } from '../data/fields.js';
+import { emptyYearData, migrateYear, JOBS } from '../data/fields.js';
 
 const KEY = 'yearly-tax-return:v1';
 
@@ -25,12 +25,19 @@ function load() {
   }
 }
 
-/** Deep-merge saved year data over a fresh template so new fields always exist. */
-function withDefaults(year) {
+/** Upgrade old data and deep-merge over a fresh template so new fields always exist. */
+function withDefaults(raw) {
   const d = emptyYearData();
+  const year = migrateYear(raw);
   if (!year) return d;
-  const jobs = Object.fromEntries(Object.keys(d.jobs).map((j) => [j, { ...d.jobs[j], ...year.jobs?.[j] }]));
-  return { ...d, ...year, jobs, shared: { ...d.shared, ...year.shared } };
+  const jobs = Object.fromEntries(JOBS.map((j) => [j, { ...d.jobs[j], ...year.jobs?.[j] }]));
+  return {
+    ...d,
+    ...year,
+    jobs,
+    shared: { ...d.shared, ...year.shared },
+    vehicles: Array.isArray(year.vehicles) ? year.vehicles : d.vehicles,
+  };
 }
 
 export function useAppStore() {

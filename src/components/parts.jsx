@@ -1,89 +1,71 @@
 import { useState } from 'react';
 import { useI18n } from '../i18n/index.jsx';
-import { JOBS, JOB_META, EXPENSE_BOXES } from '../data/fields.js';
-import { Button, Card, CopyValue, Segmented, Callout } from './ui.jsx';
+import { JOBS, JOB_META, EXPENSE_BOXES, VEHICLE_TYPES } from '../data/fields.js';
+import { Button, Card, CopyValue, Callout } from './ui.jsx';
 import { buildSummary, toCSV, toPDF, download } from '../lib/exportData.js';
 
-export function MethodToggle({ method, onChange }) {
-  const { t } = useI18n();
-  return (
-    <div>
-      <div className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted">{t('method.title')}</div>
-      <Segmented
-        label={t('method.title')}
-        value={method}
-        onChange={onChange}
-        options={[
-          { value: 'actual', label: t('method.actual'), icon: '🧾' },
-          { value: 'mileage', label: t('method.mileage'), icon: '🛣️' },
-        ]}
-      />
-    </div>
-  );
-}
+const round2 = (n) => Math.round(n * 100) / 100;
 
-/** Side-by-side comparison of both expense methods, highlighting the cheaper one. */
-export function MethodCompare({ result, method, onChange, compact = false }) {
+export const vehicleName = (v, t, i) => v.name?.trim() || `${t(`vehicle.defaultName.${v.type}`)}${i > 0 ? ` ${i + 1}` : ''}`;
+
+/** Per-vehicle comparison of actual costs vs the mileage rate, with a one-tap "use the best" button. */
+export function VehicleMethods({ result, data, updateYear, compact = false }) {
   const { t, money } = useI18n();
-  const { compare } = result;
-  const hasData = result.totals.gross > 0 && (result.totals.businessMiles > 0 || result.totals.vehicleActual > 0);
-  const name = (m) => t(`method.${m}`);
+  const list = result.vehicles.filter((v) => v.businessMiles > 0 || v.running > 0 || v.actualClaim > 0);
+  if (!list.length) return <p className="text-sm text-muted">{t('method.noVehicles')}</p>;
 
-  const tile = (m) => {
-    const c = compare[m];
-    const best = compare.better === m;
-    const active = method === m;
-    return (
-      <button
-        type="button"
-        onClick={() => onChange(m)}
-        aria-pressed={active}
-        className={`relative flex-1 rounded-xl border p-3 text-left transition ${
-          best ? 'border-accent bg-accent-soft' : 'border-line bg-surface'
-        } ${active ? 'ring-2 ring-accent' : ''}`}
-      >
-        {best && (
-          <span className="absolute -top-2.5 right-3 rounded-full bg-accent px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-accent-ink">
-            ★ {t('method.best')}
-          </span>
-        )}
-        <div className="text-sm font-bold text-ink">
-          {m === 'actual' ? '🧾' : '🛣️'} {name(m)}
-        </div>
-        {!compact && <p className="mt-1 text-xs leading-snug text-muted">{t(`method.${m}Desc`)}</p>}
-        <dl className="mt-2 space-y-0.5 text-xs">
-          <div className="flex justify-between gap-2">
-            <dt className="text-muted">{t('method.expensesLabel')}</dt>
-            <dd className="num font-bold text-ink">{money(c.expenses)}</dd>
-          </div>
-          <div className="flex justify-between gap-2">
-            <dt className="text-muted">{t('method.taxLabel')}</dt>
-            <dd className="num font-bold text-ink">{money(c.tax)}</dd>
-          </div>
-        </dl>
-      </button>
-    );
-  };
+  const apply = () =>
+    updateYear((d) => {
+      result.best.switches.forEach((s) => {
+        const v = d.vehicles.find((x) => x.id === s.id);
+        if (v) v.method = s.to;
+      });
+      return d;
+    });
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-2 pt-2">
-        {tile('actual')}
-        {tile('mileage')}
-      </div>
-      {!hasData ? (
-        <p className="text-xs text-muted">{t('method.noData')}</p>
-      ) : compare.better === 'same' ? (
-        <Callout>{t('method.same')}</Callout>
-      ) : (
+      {!compact && <p className="text-xs text-muted">{t('method.perVehicle')}</p>}
+      <ul className="space-y-2">
+        {list.map((v) => {
+          const i = data.vehicles.findIndex((x) => x.id === v.id);
+          const tile = (m, amount) => {
+            const best = v.best === m;
+            const active = v.method === m;
+            return (
+              <div className={`relative flex-1 rounded-lg border px-2.5 py-2 ${best ? 'border-accent bg-accent-soft' : 'border-line bg-bg'} ${active ? 'ring-2 ring-accent' : ''}`}>
+                {best && <span className="absolute -top-2 right-2 rounded-full bg-accent px-1.5 text-[9px] font-extrabold uppercase text-accent-ink">★ {t('method.best')}</span>}
+                <div className="text-[11px] font-bold text-muted">{m === 'actual' ? '🧾 ' + t('method.actual') : '🛣️ ' + t('method.mileage')}</div>
+                <div className="num text-sm font-extrabold text-ink">{amount === null ? '—' : money(amount)}</div>
+              </div>
+            );
+          };
+          return (
+            <li key={v.id} className="rounded-xl border border-line bg-surface p-3">
+              <div className="mb-2 flex items-center justify-between gap-2 text-sm font-bold text-ink">
+                <span>
+                  {VEHICLE_TYPES[v.type].icon} {vehicleName({ ...data.vehicles[i], type: v.type }, t, i)}
+                </span>
+                <span className="num text-xs text-muted">{v.businessMiles.toLocaleString('en-GB')} mi</span>
+              </div>
+              <div className="flex gap-2 pt-1">
+                {tile('actual', v.actualClaim)}
+                {tile('mileage', v.eligible ? v.mileageClaim : null)}
+              </div>
+              {!v.eligible && <p className="mt-2 text-[11px] text-muted">ℹ️ {t(`vehicle.mileageNotAllowed.${v.type}`)}</p>}
+            </li>
+          );
+        })}
+      </ul>
+      {result.best.switches.length > 0 ? (
         <Callout tone="good">
-          <strong>{t('method.better', { method: name(compare.better), amount: money(compare.saving) })}</strong>
-          {method !== compare.better && (
-            <button type="button" onClick={() => onChange(compare.better)} className="ml-2 font-bold text-accent underline underline-offset-2">
-              {t('method.switchTo', { method: name(compare.better) })}
-            </button>
-          )}
+          <strong>{t('method.savingTotal', { amount: money(result.best.saving) })}</strong>
+          <button type="button" onClick={apply} className="mt-1 block font-bold text-accent underline underline-offset-2">
+            {t('method.applyBest')}
+          </button>
         </Callout>
+      ) : (
+        <p className="text-xs text-muted">✅ {t('method.allBest')}</p>
       )}
       {!compact && <p className="text-xs text-muted">ℹ️ {t('method.lockNote')}</p>}
     </div>
@@ -93,7 +75,8 @@ export function MethodCompare({ result, method, onChange, compact = false }) {
 /** Gross → expenses → tax → what you keep, as one stacked bar. */
 export function MoneyFlow({ result }) {
   const { t, money } = useI18n();
-  const { gross, expenses } = result.totals;
+  const { gross } = result.totals;
+  const expenses = result.totals.expenses + result.totals.capitalAllowances;
   if (gross <= 0) return null;
   const tax = Math.min(result.tax.total, Math.max(0, gross - expenses));
   const keep = Math.max(0, gross - expenses - tax);
@@ -127,7 +110,7 @@ export function StepFlow({ result }) {
   const { totals, tax } = result;
   const steps = [
     { op: '', label: t('calc.gross'), def: t('calc.grossDef'), v: totals.gross },
-    { op: '−', label: t('calc.expenses'), def: t('calc.expensesDef'), v: totals.expenses },
+    { op: '−', label: t('calc.expenses'), def: t('calc.expensesDef'), v: round2(totals.expenses + totals.capitalAllowances) },
     { op: '=', label: t('calc.net'), def: t('calc.netDef'), v: totals.netProfit, strong: true },
     { op: '−', label: t('calc.allowance'), def: t('calc.allowanceDef'), v: Math.min(tax.allowance, Math.max(0, totals.taxableProfits)) },
     { op: '=', label: t('calc.taxable'), def: t('calc.taxableDef'), v: tax.taxable, strong: true },
@@ -160,7 +143,7 @@ export function BoxesTable({ result }) {
         const r = result.jobs[j];
         const b = r.boxes;
         const isOpen = open === j;
-        const rows = [9, ...EXPENSE_BOXES.filter((n) => b[n] > 0), 20, b[22] > 0 ? 22 : 21];
+        const rows = [9, ...(b[10] > 0 ? [10] : []), ...EXPENSE_BOXES.filter((n) => b[n] > 0), 20, b[22] > 0 ? 22 : 21, ...(b['24.1'] > 0 ? ['24.1'] : []), ...(b[25] > 0 ? [25] : []), b[32] > 0 ? 32 : 31];
         return (
           <div key={j} className="overflow-hidden rounded-xl border border-line">
             <button
@@ -174,19 +157,19 @@ export function BoxesTable({ result }) {
                 SA103S · {t(`jobs.${j}.name`)}
               </span>
               <span className="num text-sm font-bold text-muted">
-                {b[22] > 0 ? `−${money0(b[22])}` : money0(b[21])} {isOpen ? '▴' : '▾'}
+                {b[32] > 0 ? `−${money0(b[32])}` : money0(b[31])} {isOpen ? '▴' : '▾'}
               </span>
             </button>
             {isOpen && (
               <div className="divide-y divide-line">
                 {!r.shortFormOk && <div className="p-3"><Callout tone="warn">{t('calc.longForm')}</Callout></div>}
-                {b[22] > 0 && <div className="p-3"><Callout tone="warn">{t('calc.loss')}</Callout></div>}
+                {b[32] > 0 && <div className="p-3"><Callout tone="warn">{t('calc.loss')}</Callout></div>}
                 {rows.map((n) => (
-                  <div key={n} className={`flex items-center gap-3 px-3 py-2 ${[9, 20, 21, 22].includes(n) ? 'bg-surface' : 'bg-bg'}`}>
-                    <span className="num w-14 shrink-0 rounded-md bg-surface-2 px-1.5 py-0.5 text-center text-xs font-extrabold text-accent">
+                  <div key={n} className={`flex items-center gap-3 px-3 py-2 ${[9, 20, 21, 22, 31, 32].includes(n) ? 'bg-surface' : 'bg-bg'}`}>
+                    <span className="num w-[4.5rem] shrink-0 rounded-md bg-surface-2 px-1.5 py-0.5 text-center text-xs font-extrabold text-accent">
                       {t('calc.box')} {n}
                     </span>
-                    <span className={`min-w-0 flex-1 text-sm ${[9, 20, 21, 22].includes(n) ? 'font-bold text-ink' : 'text-muted'}`}>{t(`boxes.${n}`)}</span>
+                    <span className={`min-w-0 flex-1 text-sm ${[9, 20, 21, 22, 31, 32].includes(n) ? 'font-bold text-ink' : 'text-muted'}`}>{t(`boxes.${String(n).replace('.', '_')}`)}</span>
                     <CopyValue value={b[n]} display={money0(b[n])} />
                   </div>
                 ))}

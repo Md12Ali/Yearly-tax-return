@@ -11,9 +11,9 @@ English and বাংলা (Bengali), light and dark theme. Your figures are sa
 | Tab | Features |
 | --- | --- |
 | 📊 Dashboard | Estimated tax & NI, monthly set-aside, deadline countdown, income by business, Making Tax Digital warning, key dates, progress checklist |
-| 💰 Income & Expenses | Income per platform, expenses per business, shared car costs split by business mileage, quick log for single receipts |
-| 🧮 Tax Calculator | Actual costs vs mileage (45p/25p) comparison with the cheaper method highlighted, Income Tax + Class 4 + Class 2 breakdown, payments on account, SA103S box-by-box figures with copy buttons |
-| 📜 HMRC Guide | 6 illustrated steps from sign-in to paying with NatWest/Revolut, gross vs net, what you can/can't claim, records checklist |
+| 💰 Income & Expenses | 25+ income sources and 30+ expense types per job, your own custom items (with SA103S box), vehicles (car, dual-control car, van, motorbike, bicycle) each with its own method, capital allowances on a car you bought, working-from-home flat rate, quick log for single receipts, and a “What can I claim here?” guide for every job |
+| 🧮 Tax Calculator | Actual costs vs mileage compared for each vehicle, with one tap to use the best method, Income Tax + Class 4 + Class 2 breakdown, payments on account, SA103S box-by-box figures with copy buttons |
+| 📜 HMRC Guide | 6 illustrated steps from sign-in to paying with NatWest/Revolut, an allowed / not-allowed list for each job with SA103S boxes, records checklist |
 
 **Export:** PDF and CSV summary with SA103S box numbers (9, 12, 16–21).
 
@@ -22,8 +22,10 @@ English and বাংলা (Bengali), light and dark theme. Your figures are sa
 - Rates for England, Wales & NI, tax years **2024/25, 2025/26 and 2026/27** (`src/data/taxYears.js`).
 - Personal Allowance £12,570 (reduced above £100,000), 20% / 40% / 45% bands.
 - Class 4 NI 6% on £12,570–£50,270, 2% above. Class 2 is treated as paid above the small profits threshold; optional voluntary Class 2 below it.
-- Each job is a separate SA103S page. Shared car costs are cut to your business-use % (business miles ÷ total miles) and split by each job's miles.
-- Mileage method replaces all car running costs; parking, platform fees, phone and licences are still claimed.
+- Each job is a separate SA103S page. Vehicle costs are cut to each vehicle's business-use % (business miles ÷ total miles) and split by each job's miles. Shared costs (phone, accountant, home) are split by income.
+- Mileage rates: cars/vans 45p then 25p after 10,000 miles (55p/25p from 6 April 2026), motorbikes 24p. Not allowed for dual-control instructor cars or bicycles. The rate replaces all running costs; parking, tolls, platform fees, phone and licences are still claimed.
+- Capital allowances on a car (actual method only): 100% for a new fully electric car, otherwise 18% (14% from April 2026) or 6% over 50g/km, × business use. Vans, motorbikes and bicycles bought are an expense under the cash basis.
+- Working from home flat rate: £10 / £18 / £26 a month for 25–50 / 51–100 / 101+ hours.
 - Income rounded down and expenses rounded up to whole pounds, as HMRC allows.
 - Assumes self-employment is your only income. Not professional tax advice.
 

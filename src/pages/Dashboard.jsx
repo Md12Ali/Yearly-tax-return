@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n/index.jsx';
 import { JOBS, JOB_META } from '../data/fields.js';
 import { Card, Stat, Progress, Callout, Button } from '../components/ui.jsx';
-import { MethodCompare, MoneyFlow, ExportButtons } from '../components/parts.jsx';
+import { VehicleMethods, MoneyFlow, ExportButtons } from '../components/parts.jsx';
 
 const daysUntil = (iso) => {
   const today = new Date();
@@ -66,7 +66,7 @@ export default function Dashboard({ result, cfg, year, updateYear, goTo }) {
       <Card title={t('dash.stats')}>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Stat label={t('calc.gross')} value={money0(totals.gross)} hint={t('calc.grossDef')} />
-          <Stat label={t('calc.expenses')} value={money0(totals.expenses)} hint={t('calc.expensesDef')} />
+          <Stat label={t('calc.expenses')} value={money0(totals.expenses + totals.capitalAllowances)} hint={t('calc.expensesDef')} />
           <Stat label={t('calc.net')} value={money0(totals.netProfit)} hint={t('calc.netDef')} tone={totals.netProfit < 0 ? 'bad' : undefined} />
           <Stat label={t('calc.taxable')} value={money0(tax.taxable)} hint={t('calc.taxableDef')} />
         </div>
@@ -101,7 +101,7 @@ export default function Dashboard({ result, cfg, year, updateYear, goTo }) {
         </Card>
 
         <Card title={t('method.title')}>
-          <MethodCompare result={result} method={year.method} compact onChange={(m) => updateYear((d) => ({ ...d, method: m }))} />
+          <VehicleMethods result={result} data={year} updateYear={updateYear} compact />
         </Card>
       </div>
 

@@ -1,6 +1,6 @@
 import { useI18n } from '../i18n/index.jsx';
 import { Card, MoneyInput, Switch, Callout, Stat } from '../components/ui.jsx';
-import { MethodCompare, StepFlow, BoxesTable, ExportButtons } from '../components/parts.jsx';
+import { VehicleMethods, StepFlow, BoxesTable, ExportButtons } from '../components/parts.jsx';
 
 export default function TaxCalculator({ result, cfg, year, updateYear }) {
   const { t, money, money0, date, pct } = useI18n();
@@ -17,7 +17,7 @@ export default function TaxCalculator({ result, cfg, year, updateYear }) {
   return (
     <div className="space-y-4">
       <Card title={t('method.title')}>
-        <MethodCompare result={result} method={year.method} onChange={(m) => updateYear((d) => ({ ...d, method: m }))} />
+        <VehicleMethods result={result} data={year} updateYear={updateYear} />
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">

@@ -8,7 +8,8 @@ const whole = (n) => `£${Math.round(n || 0).toLocaleString('en-GB')}`;
 const fmtDate = (iso) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
-const BOX_ORDER = [9, 10, ...EXPENSE_BOXES, 20, 21, 22];
+const BOX_ORDER = [9, 10, ...EXPENSE_BOXES, 20, 21, 22, '24.1', 25, 31, 32];
+const boxLabel = (n) => en.boxes[String(n).replace('.', '_')];
 
 /** Structured summary used by both exports. */
 export function buildSummary(result, cfg, year) {
@@ -18,12 +19,13 @@ export function buildSummary(result, cfg, year) {
     return {
       id: j,
       name: en.jobs[j].name,
-      rows: BOX_ORDER.filter((n) => [9, 20, 21].includes(n) || b[n] > 0).map((n) => ({ box: n, label: en.boxes[n], value: b[n] })),
+      rows: BOX_ORDER.filter((n) => [9, 20, 21, 31].includes(n) || b[n] > 0).map((n) => ({ box: n, label: boxLabel(n), value: b[n] })),
     };
   });
   const calc = [
     ['Gross income (all businesses)', gbp(totals.gross)],
     ['Allowable expenses', gbp(totals.expenses)],
+    ...(totals.capitalAllowances ? [['Capital allowances', gbp(totals.capitalAllowances)]] : []),
     ['Total taxable profits (all businesses)', whole(totals.taxableProfits)],
     ['Personal Allowance', whole(tax.allowance)],
     ['Taxable income', whole(tax.taxable)],
@@ -40,7 +42,10 @@ export function buildSummary(result, cfg, year) {
   ];
   return {
     title: `Self Assessment summary ${cfg.label}`,
-    method: year.method === 'mileage' ? 'Simplified mileage (45p / 25p)' : 'Actual car costs',
+    method: result.vehicles
+      .filter((v) => v.businessMiles > 0 || v.claim > 0)
+      .map((v, i) => `${year.vehicles.find((x) => x.id === v.id)?.name || en.vehicle.defaultName[v.type] + (i ? ` ${i + 1}` : '')}: ${v.method === 'mileage' ? 'mileage rate' : 'actual costs'} (${gbp(v.claim)})`)
+      .join('; ') || 'No vehicle claim',
     miles: totals.businessMiles,
     businesses,
     calc,
@@ -58,7 +63,7 @@ export function toCSV(summary) {
   summary.businesses.forEach((b) => b.rows.forEach((r) => rows.push(['SA103S', b.name, r.box, r.label, r.value])));
   summary.calc.forEach(([k, v]) => rows.push(['Tax calculation', '', '', k, v]));
   summary.pay.forEach(([when, amt, what]) => rows.push(['Payments', '', '', `${what} ${when}`, amt]));
-  rows.push(['Info', '', '', 'Expense method', summary.method]);
+  rows.push(['Info', '', '', 'Vehicles', summary.method]);
   rows.push(['Info', '', '', 'Business miles', summary.miles]);
   return '﻿' + rows.map((r) => r.map(csvCell).join(',')).join('\r\n');
 }
@@ -77,6 +82,20 @@ export async function toPDF(summary, cfg) {
   let page = doc.addPage([W, 842]);
   let y = 842 - M;
 
+  const wrap = (str, size) => {
+    const words = String(str).split(' ');
+    const lines = [];
+    let cur = '';
+    words.forEach((w) => {
+      const next = cur ? `${cur} ${w}` : w;
+      if (font.widthOfTextAtSize(next, size) > W - 2 * M) {
+        lines.push(cur);
+        cur = w;
+      } else cur = next;
+    });
+    if (cur) lines.push(cur);
+    return lines;
+  };
   const ensure = (h) => {
     if (y - h < M) {
       page = doc.addPage([W, 842]);
@@ -112,15 +131,19 @@ export async function toPDF(summary, cfg) {
 
   text(summary.title, M, 18, bold);
   y -= 18;
-  text(`Tax year ${cfg.start.slice(0, 4)}-${cfg.end.slice(0, 4)} (6 April to 5 April)  |  Expense method: ${summary.method}`, M, 9, font, muted);
+  text(`Tax year ${cfg.start.slice(0, 4)}-${cfg.end.slice(0, 4)} (6 April to 5 April)`, M, 9, font, muted);
   y -= 12;
+  wrap(`Vehicles: ${summary.method}`, 9).forEach((line) => {
+    text(line, M, 9, font, muted);
+    y -= 12;
+  });
   text(`Generated ${new Date().toLocaleDateString('en-GB')}  |  Estimate only - check figures against your records before submitting.`, M, 9, font, muted);
   y -= 10;
 
   summary.businesses.forEach((b) => {
     heading(`Self-employment (short) SA103S - ${b.name}`);
     row(['Box', 'Description', 'Amount'], { b: true });
-    b.rows.forEach((r) => row([String(r.box), r.label, whole(r.value)], { b: [9, 20, 21].includes(r.box) }));
+    b.rows.forEach((r) => row([String(r.box), r.label, whole(r.value)], { b: [9, 20, 21, 31].includes(r.box) }));
   });
 
   heading('Tax calculation');

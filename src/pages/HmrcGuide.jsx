@@ -3,6 +3,7 @@ import { useI18n } from '../i18n/index.jsx';
 import { JOBS, JOB_META } from '../data/fields.js';
 import { HMRC_BANK } from '../data/taxYears.js';
 import { Card, Callout } from '../components/ui.jsx';
+import { ClaimGuideTabs } from '../components/ClaimGuide.jsx';
 
 /* ---------- Illustrated screens (generic, not a copy of GOV.UK) ---------- */
 
@@ -239,6 +240,10 @@ export default function HmrcGuide({ result, cfg, year, updateYear }) {
           </div>
         </Card>
       </div>
+
+      <Card title={`🧾 ${t('claimGuide.title')}`} subtitle={t('claimGuide.intro')}>
+        <ClaimGuideTabs />
+      </Card>
 
       <Card title={`✅ ${t('learn.claim.title')}`}>
         <div className="grid gap-4 sm:grid-cols-2">

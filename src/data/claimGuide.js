@@ -1,0 +1,66 @@
+// What each kind of worker can claim. Text lives in src/i18n/guide.*.js under claimGuide.items.
+// s: 'yes' allowed | 'part' allowed with conditions | 'no' not allowed
+// box: SA103S box ('ca' = capital allowances boxes 24.1/25)
+// car: 'covered' = replaced by the mileage rate | 'extra' = claim on top of the mileage rate
+
+export const CLAIM_ITEMS = {
+  tuition: [
+    { id: 'franchiseFee', s: 'yes', box: 19, car: 'extra' },
+    { id: 'dualControlCar', s: 'part', box: 12 },
+    { id: 'dualControlFit', s: 'part', box: 'ca' },
+    { id: 'adiBadge', s: 'yes', box: 19, car: 'extra' },
+    { id: 'qualifying', s: 'no' },
+    { id: 'cpd', s: 'yes', box: 19, car: 'extra' },
+    { id: 'teachingAids', s: 'yes', box: 19, car: 'extra' },
+    { id: 'liability', s: 'yes', box: 14, car: 'extra' },
+    { id: 'pupilTestFees', s: 'part', box: 19, car: 'extra' },
+    { id: 'marketing', s: 'yes', box: 19, car: 'extra' },
+    { id: 'bookingApps', s: 'yes', box: 19, car: 'extra' },
+    { id: 'pupilGifts', s: 'no' },
+  ],
+  privateHire: [
+    { id: 'serviceFees', s: 'yes', box: 19, car: 'extra' },
+    { id: 'tflDriver', s: 'yes', box: 19, car: 'extra' },
+    { id: 'tflChecks', s: 'yes', box: 19, car: 'extra' },
+    { id: 'pcoRental', s: 'part', box: 12, car: 'covered' },
+    { id: 'phvLicence', s: 'part', box: 12, car: 'covered' },
+    { id: 'hireReward', s: 'part', box: 12, car: 'covered' },
+    { id: 'congestion', s: 'yes', box: 12, car: 'extra' },
+    { id: 'passengerExtras', s: 'yes', box: 19, car: 'extra' },
+    { id: 'dashcam', s: 'yes', box: 19, car: 'extra' },
+    { id: 'smartClothes', s: 'no' },
+    { id: 'waitingFood', s: 'no' },
+  ],
+  delivery: [
+    { id: 'platformFees', s: 'yes', box: 19, car: 'extra' },
+    { id: 'bags', s: 'yes', box: 19, car: 'extra' },
+    { id: 'protective', s: 'yes', box: 19, car: 'extra' },
+    { id: 'bike', s: 'part', box: 12 },
+    { id: 'motorbike', s: 'part', box: 12 },
+    { id: 'carVan', s: 'part', box: 12 },
+    { id: 'transitInsurance', s: 'yes', box: 14, car: 'extra' },
+    { id: 'hubParking', s: 'yes', box: 12, car: 'extra' },
+    { id: 'ordinaryCoat', s: 'no' },
+    { id: 'ownFood', s: 'no' },
+  ],
+  everyone: [
+    { id: 'phoneBill', s: 'part', box: 18, car: 'extra' },
+    { id: 'phoneBuy', s: 'part', box: 19, car: 'extra' },
+    { id: 'apps', s: 'yes', box: 18, car: 'extra' },
+    { id: 'accountant', s: 'yes', box: 16, car: 'extra' },
+    { id: 'bank', s: 'yes', box: 17, car: 'extra' },
+    { id: 'homeFlat', s: 'part', box: 14, car: 'extra' },
+    { id: 'carRunning', s: 'part', box: 12 },
+    { id: 'carBuy', s: 'part', box: 'ca' },
+    { id: 'financeInterest', s: 'part', box: 12, car: 'covered' },
+    { id: 'fines', s: 'no' },
+    { id: 'meals', s: 'no' },
+    { id: 'clothes', s: 'no' },
+    { id: 'personalTrips', s: 'no' },
+    { id: 'loanRepay', s: 'no' },
+    { id: 'taxNi', s: 'no' },
+    { id: 'pension', s: 'no' },
+  ],
+};
+
+export const GUIDE_JOBS = ['tuition', 'privateHire', 'delivery', 'everyone'];

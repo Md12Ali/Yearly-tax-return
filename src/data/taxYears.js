@@ -10,9 +10,22 @@ const INCOME_TAX = {
   rates: { basic: 0.2, higher: 0.4, additional: 0.45 },
 };
 
+// HMRC simplified expenses flat rates (per vehicle). Dual-control instructor cars and bicycles are not eligible.
+const MILEAGE_TO_2026 = { firstMiles: 10000, carFirst: 0.45, carLater: 0.25, motorcycle: 0.24 };
+const MILEAGE_FROM_2026 = { firstMiles: 10000, carFirst: 0.55, carLater: 0.25, motorcycle: 0.24 };
+
+// Capital allowances on a car bought for the business (actual-costs method only).
+const CA_TO_2026 = { mainRate: 0.18, specialRate: 0.06, co2Threshold: 50, zeroEmissionFya: 1 };
+const CA_FROM_2026 = { mainRate: 0.14, specialRate: 0.06, co2Threshold: 50, zeroEmissionFya: 1 }; // FYA to April 2027
+
+const HOME_FLAT_RATES = [
+  { minHours: 101, monthly: 26 },
+  { minHours: 51, monthly: 18 },
+  { minHours: 25, monthly: 10 },
+];
+
 const CLASS4 = { lowerLimit: 12570, upperLimit: 50270, mainRate: 0.06, upperRate: 0.02 };
 
-export const MILEAGE = { firstMiles: 10000, firstRate: 0.45, laterRate: 0.25 };
 export const TRADING_ALLOWANCE = 1000;
 export const SHORT_FORM_TURNOVER_LIMIT = 90000; // SA103S can be used below this
 export const POA_THRESHOLD = 1000; // payments on account needed when bill is over this
@@ -25,6 +38,9 @@ export const TAX_YEARS = {
     end: '2025-04-05',
     incomeTax: INCOME_TAX,
     class4: CLASS4,
+    mileage: MILEAGE_TO_2026,
+    capitalAllowances: CA_TO_2026,
+    homeFlatRates: HOME_FLAT_RATES,
     class2: { smallProfitsThreshold: 6845, weeklyRate: 3.45, weeks: 52 },
     registerBy: '2025-10-05',
     paperDeadline: '2025-10-31',
@@ -39,6 +55,9 @@ export const TAX_YEARS = {
     end: '2026-04-05',
     incomeTax: INCOME_TAX,
     class4: CLASS4,
+    mileage: MILEAGE_TO_2026,
+    capitalAllowances: CA_TO_2026,
+    homeFlatRates: HOME_FLAT_RATES,
     class2: { smallProfitsThreshold: 6845, weeklyRate: 3.5, weeks: 52 },
     registerBy: '2026-10-05',
     paperDeadline: '2026-10-31',
@@ -53,6 +72,9 @@ export const TAX_YEARS = {
     end: '2027-04-05',
     incomeTax: INCOME_TAX,
     class4: CLASS4,
+    mileage: MILEAGE_FROM_2026,
+    capitalAllowances: CA_FROM_2026,
+    homeFlatRates: HOME_FLAT_RATES,
     class2: { smallProfitsThreshold: 7105, weeklyRate: 3.65, weeks: 52 },
     registerBy: '2027-10-05',
     paperDeadline: '2027-10-31',
