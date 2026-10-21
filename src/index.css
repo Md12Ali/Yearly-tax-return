@@ -20,6 +20,7 @@
   --c-tuition: #2f6fdb;
   --c-ride: #7a4fd6;
   --c-delivery: #d9622b;
+  --c-other: #0f8a8a;
   --hero-a: #0e6a4e;
   --hero-b: #0b3d30;
   color-scheme: light;
@@ -42,6 +43,7 @@
   --c-tuition: #7aa7ff;
   --c-ride: #b69cff;
   --c-delivery: #ff9a66;
+  --c-other: #5fd3d3;
   --hero-a: #17644b;
   --hero-b: #0a2a21;
   color-scheme: dark;

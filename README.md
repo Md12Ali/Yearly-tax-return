@@ -1,8 +1,9 @@
 # Tax Return Helper 🇬🇧
 
 A mobile-first web app for **HMRC Self Assessment** if you are self-employed as a
-**trainee driving instructor**, a **private hire driver** (Uber, Bolt, FREE NOW) and/or a
-**food & parcel delivery driver** (Deliveroo, Uber Eats, Just Eat, Amazon Flex).
+**trainee driving instructor**, a **private hire driver** (Uber, Bolt, FREE NOW), a
+**food & parcel delivery driver** (Deliveroo, Uber Eats, Just Eat, Amazon Flex) and/or in
+**any other self-employment** (e.g. web design, cleaning, tutoring) — name it yourself.
 
 English and বাংলা (Bengali), light and dark theme. Your figures are saved only in your browser (LocalStorage) — nothing is sent anywhere.
 

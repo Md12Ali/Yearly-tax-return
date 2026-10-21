@@ -104,3 +104,23 @@ test('version 1 data migrates', () => {
 function round(n) {
   return Math.round(n * 100) / 100;
 }
+
+test('other self-employment and new private hire costs', () => {
+  const d = emptyYearData();
+  d.jobs.other.name = 'Web design';
+  d.jobs.other.income = { salesOther: '6000', platformOther: '1000' };
+  d.jobs.other.expenses = { costOfGoods: '200', subcontractors: '500', softwareOther: '300', equipment: '900' };
+  d.jobs.privateHire.income = { uber: '10000' };
+  d.jobs.privateHire.expenses = { congestionCharge: '540', tflAssessments: '120', dispatchApps: '60' };
+  const r = computeAll(d, cfg);
+  const o = r.jobs.other.boxes;
+  assert.equal(r.jobs.other.name, 'Web design');
+  assert.equal(o[9], 7000);
+  assert.equal(o[11], 200);
+  assert.equal(o[13], 500);
+  assert.equal(o[18], 300);
+  assert.equal(o[20], 1900);
+  assert.equal(r.jobs.privateHire.boxes[12], 540);
+  assert.equal(r.jobs.privateHire.boxes[18], 60);
+  assert.equal(r.jobs.privateHire.boxes[19], 120);
+});

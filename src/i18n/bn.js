@@ -17,9 +17,13 @@ const bn = {
     tuition: { name: 'ড্রাইভিং টিউশন', short: 'টিউশন', desc: 'ট্রেইনি ড্রাইভিং ইন্সট্রাক্টরের লেসন' },
     privateHire: { name: 'প্রাইভেট হায়ার', short: 'প্রাইভেট হায়ার', desc: 'Uber, Bolt, FREE NOW' },
     delivery: { name: 'খাবার ও পার্সেল ডেলিভারি', short: 'ডেলিভারি', desc: 'Deliveroo, Uber Eats, Just Eat, Amazon Flex' },
+    other: { name: 'অন্যান্য স্বনিযুক্ত কাজ', short: 'অন্যান্য কাজ', desc: 'অন্য যেকোনো স্বনিযুক্ত কাজ — যেমন ওয়েব ডিজাইন, ক্লিনিং, টিউটরিং' },
     shared: { name: 'যৌথ খরচ', short: 'ফোন ও অন্যান্য', desc: 'যে খরচ আপনার সব কাজে লাগে — আয় অনুযায়ী ব্যবসাগুলোর মধ্যে ভাগ হয়' },
   },
   ie: {
+    businessName: 'ব্যবসার নাম',
+    businessNameTip: 'সারাংশ ও PDF-এ দেখাবে, যেমন “Web design”। HMRC রিটার্নেও একই বিবরণ দিন।',
+    businessNamePlaceholder: 'যেমন Web design',
     vehicleElsewhere: 'গাড়ি, ভ্যান, মোটরবাইক ও সাইকেলের খরচ ⛽ যানবাহন অংশে লিখুন।',
     pickBusiness: 'কোনটি সম্পাদনা করবেন বেছে নিন',
     incomeTitle: 'আয় (গ্রস)',

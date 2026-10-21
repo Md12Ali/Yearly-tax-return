@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n/index.jsx';
 import { JOBS, JOB_META } from '../data/fields.js';
 import { Card, Stat, Progress, Callout, Button } from '../components/ui.jsx';
-import { VehicleMethods, MoneyFlow, ExportButtons } from '../components/parts.jsx';
+import { VehicleMethods, MoneyFlow, ExportButtons, jobLabel } from '../components/parts.jsx';
 
 const daysUntil = (iso) => {
   const today = new Date();
@@ -80,13 +80,13 @@ export default function Dashboard({ result, cfg, year, updateYear, goTo }) {
       <div className="grid gap-4 md:grid-cols-2">
         <Card title={t('dash.byJob')}>
           <ul className="space-y-3">
-            {JOBS.map((j) => {
+            {JOBS.filter((j) => j !== 'other' || result.jobs.other.active).map((j) => {
               const r = result.jobs[j];
               return (
                 <li key={j}>
                   <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
                     <span className="font-bold text-ink">
-                      <span aria-hidden>{JOB_META[j].icon}</span> {t(`jobs.${j}.name`)}
+                      <span aria-hidden>{JOB_META[j].icon}</span> {jobLabel(j, r, t)}
                     </span>
                     <span className="num font-bold text-ink">{money0(r.gross)}</span>
                   </div>

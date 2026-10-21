@@ -17,9 +17,13 @@ const en = {
     tuition: { name: 'Driving tuition', short: 'Tuition', desc: 'Trainee driving instructor lessons' },
     privateHire: { name: 'Private hire', short: 'Private hire', desc: 'Uber, Bolt, FREE NOW' },
     delivery: { name: 'Food & parcel delivery', short: 'Delivery', desc: 'Deliveroo, Uber Eats, Just Eat, Amazon Flex' },
+    other: { name: 'Other self-employed work', short: 'Other work', desc: 'Any other self-employment — e.g. web design, cleaning, tutoring' },
     shared: { name: 'Shared costs', short: 'Phone & other', desc: 'Costs used by all your work — split between your businesses by income' },
   },
   ie: {
+    businessName: 'Business name',
+    businessNameTip: 'Shown on your summary and PDF, e.g. “Web design”. Use the same description on your HMRC return.',
+    businessNamePlaceholder: 'e.g. Web design',
     vehicleElsewhere: 'Car, van, motorbike and bike costs go in the ⛽ Vehicles section.',
     pickBusiness: 'Choose what to edit',
     incomeTitle: 'Income (gross)',

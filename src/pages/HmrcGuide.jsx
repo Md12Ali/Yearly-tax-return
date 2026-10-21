@@ -96,7 +96,7 @@ function StepMockup({ n, result }) {
           {list.map((j) => (
             <Frame key={j} title={`Self-employment · ${t(`jobs.${j}.short`)}`}>
               <div className="text-xs font-bold text-muted">
-                {JOB_META[j].icon} {t(`jobs.${j}.name`)} · Box 9
+                {JOB_META[j].icon} {result.jobs[j].name || t(`jobs.${j}.name`)} · Box 9
               </div>
               <MockField k="turnover" value={money0(result.jobs[j].boxes[9])} highlight />
             </Frame>
@@ -109,7 +109,7 @@ function StepMockup({ n, result }) {
           {list.map((j) => (
             <Frame key={j} title={`Self-employment · ${t(`jobs.${j}.short`)}`}>
               <div className="text-xs font-bold text-muted">
-                {JOB_META[j].icon} {t(`jobs.${j}.name`)} · Box 20 → Box 21
+                {JOB_META[j].icon} {result.jobs[j].name || t(`jobs.${j}.name`)} · Box 20 → Box 21
               </div>
               <MockField k="totalExpenses" value={money0(result.jobs[j].boxes[20])} highlight />
               <MockField k="netProfit" value={money0(result.jobs[j].boxes[21])} />

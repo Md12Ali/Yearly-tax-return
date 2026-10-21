@@ -6,6 +6,9 @@ import { buildSummary, toCSV, toPDF, download } from '../lib/exportData.js';
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
+/** Business name: the user's own name for “Other work”, otherwise the standard one. */
+export const jobLabel = (j, r, t, short = false) => r?.name || t(`jobs.${j}.${short ? 'short' : 'name'}`);
+
 export const vehicleName = (v, t, i) => v.name?.trim() || `${t(`vehicle.defaultName.${v.type}`)}${i > 0 ? ` ${i + 1}` : ''}`;
 
 /** Per-vehicle comparison of actual costs vs the mileage rate, with a one-tap "use the best" button. */
@@ -154,7 +157,7 @@ export function BoxesTable({ result }) {
             >
               <span className="flex items-center gap-2 text-sm font-bold text-ink">
                 <span aria-hidden>{JOB_META[j].icon}</span>
-                SA103S · {t(`jobs.${j}.name`)}
+                SA103S · {jobLabel(j, r, t)}
               </span>
               <span className="num text-sm font-bold text-muted">
                 {b[32] > 0 ? `−${money0(b[32])}` : money0(b[31])} {isOpen ? '▴' : '▾'}

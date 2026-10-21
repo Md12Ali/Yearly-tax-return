@@ -28,6 +28,16 @@ export const CLAIM_ITEMS = {
     { id: 'congestion', s: 'yes', box: 12, car: 'extra' },
     { id: 'passengerExtras', s: 'yes', box: 19, car: 'extra' },
     { id: 'dashcam', s: 'yes', box: 19, car: 'extra' },
+    { id: 'tflAssess', s: 'yes', box: 19, car: 'extra' },
+    { id: 'dispatch', s: 'yes', box: 18, car: 'extra' },
+    { id: 'cardMachine', s: 'yes', box: 17, car: 'extra' },
+    { id: 'safety', s: 'yes', box: 19, car: 'extra' },
+    { id: 'assoc', s: 'yes', box: 19, car: 'extra' },
+    { id: 'rideTraining', s: 'yes', box: 19, car: 'extra' },
+    { id: 'bizInsurance', s: 'yes', box: 14, car: 'extra' },
+    { id: 'uniform', s: 'part', box: 19, car: 'extra' },
+    { id: 'deposit', s: 'no' },
+    { id: 'excess', s: 'part', box: 12, car: 'covered' },
     { id: 'smartClothes', s: 'no' },
     { id: 'waitingFood', s: 'no' },
   ],
@@ -42,6 +52,20 @@ export const CLAIM_ITEMS = {
     { id: 'hubParking', s: 'yes', box: 12, car: 'extra' },
     { id: 'ordinaryCoat', s: 'no' },
     { id: 'ownFood', s: 'no' },
+  ],
+  other: [
+    { id: 'goods', s: 'yes', box: 11, car: 'extra' },
+    { id: 'subcon', s: 'yes', box: 13, car: 'extra' },
+    { id: 'premisesRent', s: 'yes', box: 14, car: 'extra' },
+    { id: 'equipBuy', s: 'yes', box: 19, car: 'extra' },
+    { id: 'softwareSubs', s: 'yes', box: 18, car: 'extra' },
+    { id: 'profFees', s: 'yes', box: 16, car: 'extra' },
+    { id: 'adverts', s: 'yes', box: 19, car: 'extra' },
+    { id: 'trainingUpdate', s: 'part', box: 19, car: 'extra' },
+    { id: 'businessTravel', s: 'yes', box: 12, car: 'extra' },
+    { id: 'overnight', s: 'part', box: 12, car: 'extra' },
+    { id: 'entertaining', s: 'no' },
+    { id: 'ownDrawings', s: 'no' },
   ],
   everyone: [
     { id: 'phoneBill', s: 'part', box: 18, car: 'extra' },
@@ -63,4 +87,4 @@ export const CLAIM_ITEMS = {
   ],
 };
 
-export const GUIDE_JOBS = ['tuition', 'privateHire', 'delivery', 'everyone'];
+export const GUIDE_JOBS = ['tuition', 'privateHire', 'delivery', 'other', 'everyone'];

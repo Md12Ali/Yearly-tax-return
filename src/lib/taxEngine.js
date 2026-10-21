@@ -204,6 +204,7 @@ export function computeBusinesses(data, cfg, methodOverride = {}) {
     boxes[32] = Math.max(0, -afterCa); // loss
     r.boxes = boxes;
     r.active = active.includes(j);
+    r.name = (data.jobs[j].name || '').trim();
     r.shortFormOk = r.gross < SHORT_FORM_TURNOVER_LIMIT;
   });
 

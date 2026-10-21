@@ -3,12 +3,13 @@
 // 14 rent/rates/power/insurance, 15 repairs of equipment, 16 professional fees,
 // 17 bank/finance charges, 18 phone/stationery/office, 19 other.
 
-export const JOBS = ['tuition', 'privateHire', 'delivery'];
+export const JOBS = ['tuition', 'privateHire', 'delivery', 'other'];
 
 export const JOB_META = {
   tuition: { icon: '🚗', color: 'var(--c-tuition)' },
   privateHire: { icon: '🚕', color: 'var(--c-ride)' },
   delivery: { icon: '🛵', color: 'var(--c-delivery)' },
+  other: { icon: '💼', color: 'var(--c-other)' },
 };
 
 /* ---------------- Income ---------------- */
@@ -48,6 +49,14 @@ export const INCOME_FIELDS = {
     { id: 'otherDelivery', box: 9 },
     { id: 'grantsDelivery', box: 10 },
   ],
+  other: [
+    { id: 'salesOther', box: 9 },
+    { id: 'cashOther', box: 9 },
+    { id: 'platformOther', box: 9 },
+    { id: 'tipsOther', box: 9 },
+    { id: 'otherOther', box: 9 },
+    { id: 'grantsOther', box: 10 },
+  ],
 };
 
 /* ---------------- Job expenses (not vehicle running costs) ---------------- */
@@ -70,10 +79,20 @@ export const EXPENSE_FIELDS = {
   privateHire: [
     { id: 'platformFeesRide', box: 19 },
     { id: 'phvDriverLicence', box: 19 },
+    { id: 'tflAssessments', box: 19 },
     { id: 'dbsMedical', box: 19 },
+    { id: 'congestionCharge', box: 12 },
+    { id: 'ulezCharge', box: 12 },
+    { id: 'travelRide', box: 12 },
+    { id: 'dispatchApps', box: 18 },
+    { id: 'cardTerminal', box: 17 },
     { id: 'passengerItems', box: 19 },
     { id: 'rideEquipment', box: 19 },
-    { id: 'travelRide', box: 12 },
+    { id: 'safetyKit', box: 19 },
+    { id: 'businessInsuranceRide', box: 14 },
+    { id: 'tradeAssociation', box: 19 },
+    { id: 'trainingRide', box: 19 },
+    { id: 'uniformRide', box: 19 },
   ],
   delivery: [
     { id: 'platformFeesDelivery', box: 19 },
@@ -82,6 +101,20 @@ export const EXPENSE_FIELDS = {
     { id: 'goodsInTransit', box: 14 },
     { id: 'deliveryRightToWork', box: 19 },
     { id: 'travelDelivery', box: 12 },
+  ],
+  other: [
+    { id: 'costOfGoods', box: 11 },
+    { id: 'subcontractors', box: 13 },
+    { id: 'premises', box: 14 },
+    { id: 'businessInsurance', box: 14 },
+    { id: 'repairsEquipment', box: 15 },
+    { id: 'professionalFees', box: 16 },
+    { id: 'equipment', box: 19 },
+    { id: 'softwareOther', box: 18 },
+    { id: 'advertisingOther', box: 19 },
+    { id: 'trainingOther', box: 19 },
+    { id: 'platformFeesOther', box: 19 },
+    { id: 'travelOther', box: 12 },
   ],
   shared: [
     { id: 'phone', box: 18, allocate: 'income' },
@@ -96,7 +129,7 @@ export const EXPENSE_FIELDS = {
 };
 
 /** Boxes a custom expense can be put in. */
-export const CUSTOM_BOXES = [12, 14, 15, 16, 17, 18, 19];
+export const CUSTOM_BOXES = [11, 12, 13, 14, 15, 16, 17, 18, 19];
 export const EXPENSE_BOXES = [11, 12, 13, 14, 15, 16, 17, 18, 19];
 
 /* ---------------- Vehicles ---------------- */
@@ -113,7 +146,9 @@ export const VEHICLE_TYPES = {
 // Running costs. All are replaced by the flat rate when the vehicle uses the mileage method.
 export const VEHICLE_COSTS = ['fuel', 'insurance', 'repairs', 'tyres', 'lease', 'financeInterest', 'taxMot', 'phvVehicleLicence', 'breakdownCover', 'cleaning', 'otherVehicle'];
 
-export const newVehicle = (type = 'car', jobs = [...JOBS]) => ({
+export const DRIVING_JOBS = ['tuition', 'privateHire', 'delivery'];
+
+export const newVehicle = (type = 'car', jobs = [...DRIVING_JOBS]) => ({
   id: `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
   name: '',
   type,
@@ -133,6 +168,7 @@ export const emptyYearData = () => ({
     tuition: { income: {}, expenses: {}, customIncome: [], customExpenses: [] },
     privateHire: { income: {}, expenses: {}, customIncome: [], customExpenses: [] },
     delivery: { income: {}, expenses: {}, customIncome: [], customExpenses: [] },
+    other: { name: '', income: {}, expenses: {}, customIncome: [], customExpenses: [] },
   },
   vehicles: [{ ...newVehicle('car'), id: 'v-main' }],
   shared: { expenses: {}, customExpenses: [], homeHours: '', homeMonths: '' },

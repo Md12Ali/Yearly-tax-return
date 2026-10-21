@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useI18n } from '../i18n/index.jsx';
-import { JOBS, JOB_META, INCOME_FIELDS, EXPENSE_FIELDS, VEHICLE_TYPES, VEHICLE_COSTS, CUSTOM_BOXES, newVehicle } from '../data/fields.js';
+import { JOBS, DRIVING_JOBS, JOB_META, INCOME_FIELDS, EXPENSE_FIELDS, VEHICLE_TYPES, VEHICLE_COSTS, CUSTOM_BOXES, newVehicle } from '../data/fields.js';
 import { fieldTotal, num, homeAllowance } from '../lib/taxEngine.js';
 import { Card, MoneyInput, Segmented, Callout, Button, LabelWithTip } from '../components/ui.jsx';
 import { VehicleMethods, vehicleName } from '../components/parts.jsx';
@@ -27,11 +27,12 @@ export default function IncomeExpenses({ result, cfg, year, updateYear, resetYea
         <Segmented label={t('ie.pickBusiness')} value={scope} onChange={setScope} options={options} size="sm" />
       </div>
 
-      {JOBS.includes(scope) && <JobEditor key={scope} job={scope} result={result} year={year} updateYear={updateYear} />}
-      {scope === 'vehicles' && <VehiclesEditor result={result} year={year} updateYear={updateYear} cfg={cfg} />}
-      {scope === 'shared' && <SharedEditor year={year} updateYear={updateYear} cfg={cfg} />}
-
-      <QuickLog key={scope} scope={scope} year={year} updateYear={updateYear} />
+      <div key={scope} className="space-y-4">
+        {JOBS.includes(scope) && <JobEditor job={scope} result={result} year={year} updateYear={updateYear} />}
+        {scope === 'vehicles' && <VehiclesEditor result={result} year={year} updateYear={updateYear} cfg={cfg} />}
+        {scope === 'shared' && <SharedEditor year={year} updateYear={updateYear} cfg={cfg} />}
+        <QuickLog scope={scope} year={year} updateYear={updateYear} />
+      </div>
 
       <div className="flex justify-end pt-2">
         <Button variant="danger" onClick={() => window.confirm(t('ie.resetConfirm', { year: cfg.label })) && resetYear()}>
@@ -102,9 +103,15 @@ function JobEditor({ job, result, year, updateYear }) {
     <>
       <div className="rounded-2xl border border-line bg-surface p-4" style={{ borderLeft: `4px solid ${JOB_META[job].color}` }}>
         <div className="text-lg font-extrabold text-ink">
-          {JOB_META[job].icon} {t(`jobs.${job}.name`)}
+          {JOB_META[job].icon} {(job === 'other' && data.name?.trim()) || t(`jobs.${job}.name`)}
         </div>
         <div className="text-sm text-muted">{t(`jobs.${job}.desc`)}</div>
+        {job === 'other' && (
+          <div className="mt-3">
+            <LabelWithTip htmlFor="other-name" label={t('ie.businessName')} tip={t('ie.businessNameTip')} />
+            <input id="other-name" value={data.name || ''} maxLength={50} placeholder={t('ie.businessNamePlaceholder')} onChange={(e) => updateYear((d) => ((d.jobs.other.name = e.target.value), d))} className={inputCls} />
+          </div>
+        )}
         <div className="num mt-2 text-sm font-semibold text-ink">
           {t('ie.jobTotal', { gross: money(r.gross + r.otherIncome), expenses: money(r.expenses + r.capitalAllowances), profit: money(r.profit) })}
         </div>
@@ -161,7 +168,7 @@ function VehiclesEditor({ result, year, updateYear, cfg }) {
   const { t } = useI18n();
   const add = (type) =>
     updateYear((d) => {
-      d.vehicles.push(newVehicle(type, type === 'dualControl' ? ['tuition'] : type === 'bicycle' || type === 'motorcycle' ? ['delivery'] : [...JOBS]));
+      d.vehicles.push(newVehicle(type, type === 'dualControl' ? ['tuition'] : type === 'bicycle' || type === 'motorcycle' ? ['delivery'] : [...DRIVING_JOBS]));
       return d;
     });
   return (

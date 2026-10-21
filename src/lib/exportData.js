@@ -18,7 +18,7 @@ export function buildSummary(result, cfg, year) {
     const b = result.jobs[j].boxes;
     return {
       id: j,
-      name: en.jobs[j].name,
+      name: result.jobs[j].name || en.jobs[j].name,
       rows: BOX_ORDER.filter((n) => [9, 20, 21, 31].includes(n) || b[n] > 0).map((n) => ({ box: n, label: boxLabel(n), value: b[n] })),
     };
   });
